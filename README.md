@@ -41,7 +41,7 @@ This project investigates a customers characteristics dataset using Python in Go
 :toolbox: Data Structure:
 - Description of the table this project uses:
 
-| Column Name                 | Description                                                                  | Data Type |
+| Column Name                 | Description                                                                   | Data Type |
 |-----------------------------|-------------------------------------------------------------------------------|-----------|
 | CustomerID                  | Unique customer ID                                                            | int64     |
 | Churn                       | Churn Flag                                                                    | int64     |
@@ -64,8 +64,71 @@ This project investigates a customers characteristics dataset using Python in Go
 | DaySinceLastOrder           | Day since last order by customer                                              | float64   |
 | CashbackAmount              | Average cashback in last month                                                | float64   |
 
----
 ## :open_book: Main process 
-### 1. Data preparation
+### 1. Data cleaning/preparation
+1. Data loading and inspection
+- Firstly, import some libraries like numpy, pandas, matplotlib, etc. for initial data exploration and preprocessing
+- Secondly, import data and use functions to explore the dataset (.info, .shape, .nunique, .duplicated). Find out some information:
+  - The dataset contains 5630 customers that can be observed
+  - There is no duplicated row
+  - Data type contains numeric and object data, which can be separately inspected later
+2. Handling missing values
+- Check for rows that have null value to see that 33% of them contain at least 1 null. So delete these rows is not an option
+- Check for empty values each columns:
 
+Columns                           |  Null_percentage  | Data_type          | unique_value
+|---------------------------------|-------------------|--------------------|-------------
+DaySinceLastOrder                 |  5.452931         | float64            | 22
+OrderAmountHikeFromlastYear       |  4.706927         | float64            | 16
+Tenure                            |  4.689165         | float64            | 36
+OrderCount                        |  4.582593         | float64            | 16
+CouponUsed                        |  4.547069         | float64            | 17
+HourSpendOnApp                    |  4.529307         | float64            | 6
+WarehouseToHome                   |  4.458259         | float64            | 34
+
+- There are 7 columns that have null values, and the Null percentage of each one is approximately 5%. So the solution here is to replace them with indicated value
+- Instead of choosing between mean, median, and mode to replace. Using an ML model and letting the machine determine the optimal value to fill in.
+```python
+# Using Random Forest model to predict null values
+from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
+
+churn_filled = churn_raw.copy()
+# Create loop through the churn_raw column
+for col in churn_filled.columns:
+  if churn_filled[col].isnull().sum() == 0:
+    continue  # leave out the non null columns
+
+  # Split the data into two parts: rows with values and rows with nulls
+  know_df = churn_filled[churn_filled[col].notnull()]
+  unknow_df = churn_filled[churn_filled[col].isnull()]
+
+  # Create X_train, y_train Drop the target column (column has null) from features
+  X_train = know_df.drop(columns = [col])
+  y_train = know_df[col]
+  X_pred = unknow_df.drop(columns = [col])
+
+  # Fill other missing value with -999
+  X_train = X_train.fillna(-999)
+  X_pred = X_pred.fillna(-999)
+
+  # Encode categorical columns with one-hot encoding
+  X_train = pd.get_dummies(X_train)
+  X_pred = pd.get_dummies(X_pred)
+
+  # Align columns between train and prediction
+  X_pred = X_pred.reindex(columns = X_train.columns, fill_value = 0)
+
+  # Chose model to train:
+  if y_train.dtype == 'object' or y_train.nunique() < 10:
+    model = RandomForestClassifier(random_state = 42)
+  else:
+    model = RandomForestRegressor(random_state = 42)
+
+  # Train and predict
+  model.fit(X_train, y_train)
+  predicted = model.predict(X_pred)
+
+  # Fill the missing value with prediction
+  churn_filled.loc[churn_raw[col].isnull(), col] = predicte
+```
 
