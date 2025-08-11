@@ -334,10 +334,217 @@ plt.show()
   - Why doesn't our service attach those unmarried people?
 
 ### 3. Building Machine Learning model to predict churn users.
+**1. Feature Engineering:**
+```python
+# One-hot_Encode categorical columns:
+churn_dummies_raw = pd.get_dummies(churn_df, columns = cate_cols.columns, drop_first = True)
+# Drop customerid column
+churn_dummies = churn_dummies_raw.drop(columns= 'CustomerID',axis = 1)
+```
+***2. Model Training:***
+***Train-test split***
+```python
+# Split data into 3 data set: train-evaluate-test
+from sklearn.model_selection import train_test_split
 
+# Create X,y data
+X = churn_dummies.drop(['Churn'], axis = 1).values
+y = churn_dummies['Churn'].values
 
+# Split train-evaluate-test
+X_train, X_semi, y_train, y_semi = train_test_split(X, y, test_size = 0.3, random_state = 42, stratify = y)
+X_eva, X_test, y_eva, y_test = train_test_split(X_semi, y_semi, test_size = 0.5, random_state = 42,stratify = y_semi)
+```
 
+***Standardization:***
+```python
+from sklearn.preprocessing import StandardScaler
 
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_semi_scaled = scaler.transform(X_semi)
+X_test_scaled = scaler.transform(X_test)
+```
 
+***Training & Evaluating Model:
+```python
+# Evaluate RandomForest and XGBoost model to train
+from sklearn.ensemble import RandomForestClassifier
+from xgboost import XGBClassifier
+from sklearn.model_selection import KFold, cross_val_score
+
+# Create Model Dictionary
+models = {'Random Forest': RandomForestClassifier(),
+          'XGBoost': XGBClassifier(use_label_encoder=False, eval_metric='logloss')}
+F1_score = []
+Ballanced_Accuracy = []
+
+# Create cross validation and calculate score
+for model in models.values():
+  kf = KFold(n_splits = 5, random_state = 12, shuffle = True)
+  F1_cross_score = cross_val_score(model, X_train_scaled, y_train, cv = kf, scoring = 'f1')
+  BA_cross_score = cross_val_score(model, X_train_scaled, y_train, cv = kf, scoring = 'balanced_accuracy')
+
+  F1_score.append(F1_cross_score)
+  Ballanced_Accuracy.append(BA_cross_score)
+
+# Boxplot for F1 score
+plt.figure(figsize=(12, 5))
+
+plt.subplot(1, 2, 1)
+plt.boxplot(F1_score, labels=models.keys())
+plt.title("F1 Score")
+plt.ylabel("Score")
+plt.grid(True)
+
+# Boxplot the
+plt.subplot(1, 2, 2)
+plt.boxplot(Ballanced_Accuracy, labels=models.keys())
+plt.title("Ballanced Accuracy")
+plt.ylabel("Score")
+plt.grid(True)
+
+plt.tight_layout()
+plt.show()
+```
+<img width="1189" height="490" alt="Evaluating model" src="https://github.com/user-attachments/assets/31932b38-c43f-4c3f-944d-07981baaa98b" />
+
+- We can easily see that the XGBoost has higher score in both balanced accuracy and random forest
+=> We will use the XGBoost to predict churn user
+
+***Parameters Tunning:***
+- For simple, ballance accuracy will be choose for parameters tunning
+```python
+from sklearn.model_selection import GridSearchCV, KFold
+from xgboost import XGBClassifier
+
+# Create cross-validation for param_grid
+kf = KFold(n_splits = 5, shuffle = True, random_state = 42)
+
+# Some parameters to test on
+param_grid = {
+    'n_estimators': [100, 200, 300],
+    'max_depth': [3, 5, 7],
+    'learning_rate': [0.05, 0.1, 0.2],
+    'subsample': [0.5, 0.8, 1.0],
+    'colsample_bytree': [0.5, 0.8, 1.0]}
+
+# Running gridsrearch for the best parameter
+xgb = XGBClassifier(use_label_encoder=False, eval_metric='logloss')
+grid_search = GridSearchCV(estimator = xgb, param_grid = param_grid, scoring = 'balanced_accuracy', cv = kf)
+
+grid_search.fit(X_train_scaled, y_train)
+
+# Print the score
+print("Best parameters:", grid_search.best_params_)
+print("Best score:", grid_search.best_score_)
+```
+- The output:
+<pre>```
+Best parameters: {'colsample_bytree': 1.0, 'learning_rate': 0.2, 'max_depth': 7, 'n_estimators': 200, 'subsample': 1.0}
+Best score: 0.9271187290260683 
+```</pre>
+
+- The best parameters in practice is {'colsample_bytree': 1.0, 'learning_rate': 0.2, 'max_depth': 7, 'n_estimators': 200, 'subsample': 1.0}
+- Accuracy score for the model using these parameters is 0.927, by far the best accuracy score we can acchieve with XGBoost as it showed in the Box chart before
+- So we can deffinitely use XGBoost with these parameters for future prediction, but to assure the assumption, we should check it on the test dataset:
+
+```python
+# Create model with best param:
+xgb = XGBClassifier(use_label_encoder=False, eval_metric='logloss',
+                    colsample_bytree= 1.0, learning_rate= 0.2, max_depth= 7, n_estimators= 200, subsample= 1.0)
+xgb.fit(X_train_scaled, y_train)
+
+# Get the final test dataset:
+y_test_pred = xgb.predict(X_test_scaled)
+score = balanced_accuracy_score(y_test, y_test_pred)
+print(f'balanced accuracy score for final test: {score}')
+```
+<pre>```
+  balanced accuracy score for final test: 0.9280113969325277
+```</pre>
+
+=> The ballanced accuracy score for the model is high so we will use XGBoost with these parameter to predict our future churn customers.
+
+### 4. Churned users segmentation
+```python
+# Create churn user only table and turn string columns into numeric
+churned_user = churn_df[churn_df['Churn'] == 1]
+churned_user_dummies = pd.get_dummies(churned_user, cate_cols.columns, drop_first=True)
+```
+***Find how many churned customer segment should be clustered:***
+```python
+# Using KMeans to find the best cluster
+from sklearn.cluster import KMeans
+from sklearn.preprocessing import StandardScaler
+
+inertia = []
+cluster = range(1,7)
+
+# loop through these n_cluster and find inertia
+for n in cluster:
+  kmeans = KMeans(n_clusters = n)
+  kmeans.fit(churned_user_dummies)
+  inertia.append(kmeans.inertia_)
+
+# Plot for these cluster inertia
+plt.plot(cluster, inertia, '-o')
+plt.xlabel('Number of cluster')
+plt.ylabel('Inertia')
+plt.title('Inertia by number of cluster')
+plt.show()
+```
+<img width="567" height="455" alt="find num of cluster" src="https://github.com/user-attachments/assets/c85aea63-08b2-4dc4-bc45-b74e1c50a889" />
+- So 3 is a good choice of number cluster, k = 3 in kmeans
+
+```python
+# Scaled churned user dataset
+from sklearn.preprocessing import StandardScaler
+from sklearn.cluster import KMeans
+
+# Drop CustomerID
+churned_nocusID = churned_user_dummies.drop(columns = 'CustomerID', axis = 1)
+
+# Scale the dataset:
+scaler = StandardScaler(copy = True, with_mean = True, with_std = True)
+churned_user_scaled = scaler.fit_transform(churned_nocusID)
+
+# Apply kmeans with k = 3
+kmeans = KMeans(n_clusters=3, random_state = 42)
+churned_group = kmeans.fit_predict(churned_user_scaled)
+# print(churned_group)
+
+# Merge the churned_group to churned_user dataframe
+churned_user['Group'] = churned_group
+```
+- Number of user each group:
+Group	| Number of User
+------|----------------
+0	    | 20
+1	    | 362
+2	    | 563
+
+- Investigate deeper to understand the difference:
+
+Group	|CustomerID	 |Churn	 |Tenure	  |CityTier	  |WarehouseToHome	|HourSpendOnApp	|NumberOfDeviceRegistered	|SatisfactionScore	|NumberOfAddress	|Complain	  |OrderAmountHikeFromLastYear	|CouponUsed	|OrderCount	|DaySinceLastOrder	|CashbackAmount
+------|------------|-------|----------|-----------|-----------------|---------------|-------------------------|-------------------|-----------------|-----------|-----------------------------|-----------|-----------|-------------------|----------------
+0	    |52651.5	   | 1	   |12.5	    |1	        |18.5	            |2.9	          |4.3	                    |3.5	              |4.7	            |0.6	      |15.45	                      |3.79	      |7.7	      |8.5	              |307.13
+1	    |52665.295	 | 1	   | 4.732072 |2.309392	  |19.349525	      |2.984088	      |3.882265	                |3.334254	          |5.229262	        |0.455654	  |15.325987	                  |2.277238	  |3.922348	  |4.932852	          |186.161271
+2	    |52716.413	 | 1	   | 1.921723	|1.516956	  |15.730224	      |2.895204	      |3.956266	                |3.428064	          |3.91119	        |0.532593	  |15.6004618	                  |1.307262	  |2.044455	  |2.244563	          |138.565218
+
+- For the Group 0, they seem to be long term user who stay with us for more than a year. Made nearly 8 orders each person, they also used average of 4 coupons, means that 50% of their purchased had coupons with it (assume 1 purchased can only has 1 coupon).
+- And they also had a huge cashback amount by more than 307$. But their average Day since last order is far older than 2 other groups.
+  - This could be the VIP customer, cannot loose them.
+  - It could be that this type of user love cashback, perhaps they haven't earned any of those promotions recently.
+  - Run some voucher or cashback campaign targeting these type of customer.
+
+- For the Group 1, the average distance from their home to warehouses is nearly 20km, higher than 2 others group, and their average city tier is high mean that they mostly live in small city or town.
+- Their order Tenure, order count are just average
+  - This might be the regular customer segment, who live  far away from the storage  
+  - Investigate more about the shipment time, that could effect on the customer experience
+
+- For the Group 2, this is the bigest group in this clustering with 560 people. As the table show, their averagae tenure is 2 month, their average Order count is not even 2 orders.
+- It's also show that 65% of these order have coupons with it.
+  - These could be some new user that try using the company service (maybe because our coupons), need more investigate on these customers journey.
 
 
