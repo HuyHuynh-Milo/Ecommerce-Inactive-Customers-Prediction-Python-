@@ -198,6 +198,20 @@ unique value of MaritalStatus:
   - PreferedOrderCat: Mobile = Mobile Phone
 
 ### 2. Exploratory Data Analysis
+
+<img width="579" height="497" alt="image" src="https://github.com/user-attachments/assets/de6e89d8-0d39-4309-b2d6-8eb0c1f85108" />
+
+
+***Heatmap***
+
+<img width="726" height="618" alt="Heatmap" src="https://github.com/user-attachments/assets/f499d959-005a-4523-8764-698639e4d6c3" />
+
+- Some information from the map:
+  - Strong positive relation between the order count and Coupon Used
+  - Users' Tenure has positively affected by the cashback amount
+  - Order count might have a positive effect on days since last order
+  - Tenure and churn have a weak negative relation.
+  
 **a. Top important features:**
 ```python
 # ML model to measure features importances
@@ -224,8 +238,8 @@ feature_names = X_train.columns
 
 # Create and sort dataframe for drawing barplot
 importance_df = pd.DataFrame({
-    'Feature' : feature_names,
-    'Importances' : importances
+    'Feature': feature_names,
+    'Importances': importances
 }).sort_values(by = 'Importances', ascending = False)
 
 # Draw a plot for the importance data with the original categories (without encode)
@@ -517,7 +531,8 @@ churned_group = kmeans.fit_predict(churned_user_scaled)
 # Merge the churned_group to churned_user dataframe
 churned_user['Group'] = churned_group
 ```
-- Number of user each group:
+- Number of users each group:
+
 Group	| Number of User
 ------|----------------
 0	    | 20
@@ -532,19 +547,36 @@ Group	|CustomerID	 |Churn	 |Tenure	  |CityTier	  |WarehouseToHome	|HourSpendOnAp
 1	    |52665.295	 | 1	   | 4.732072 |2.309392	  |19.349525	      |2.984088	      |3.882265	                |3.334254	          |5.229262	        |0.455654	  |15.325987	                  |2.277238	  |3.922348	  |4.932852	          |186.161271
 2	    |52716.413	 | 1	   | 1.921723	|1.516956	  |15.730224	      |2.895204	      |3.956266	                |3.428064	          |3.91119	        |0.532593	  |15.6004618	                  |1.307262	  |2.044455	  |2.244563	          |138.565218
 
-- For the Group 0, they seem to be long term user who stay with us for more than a year. Made nearly 8 orders each person, they also used average of 4 coupons, means that 50% of their purchased had coupons with it (assume 1 purchased can only has 1 coupon).
+- For Group 0, they seem to be long-term users who stay with us for more than a year. Made nearly 8 orders each person, they also used an average of 4 coupons, means that 50% of their purchased had coupons with it (assume 1 purchased can only has 1 coupon).
 - And they also had a huge cashback amount by more than 307$. But their average Day since last order is far older than 2 other groups.
   - This could be the VIP customer, cannot loose them.
   - It could be that this type of user love cashback, perhaps they haven't earned any of those promotions recently.
-  - Run some voucher or cashback campaign targeting these type of customer.
+  - Run some voucher or cashback campaign targeting this type of customer.
 
-- For the Group 1, the average distance from their home to warehouses is nearly 20km, higher than 2 others group, and their average city tier is high mean that they mostly live in small city or town.
+- For Group 1, the average distance from their home to warehouses is nearly 20km, higher than 2 other groups, and their average city tier is high mean that they mostly live in small city or town.
 - Their order Tenure, order count are just average
   - This might be the regular customer segment, who live  far away from the storage  
-  - Investigate more about the shipment time, that could effect on the customer experience
+  - Investigate more about the shipment time, which could affect the customer experience
 
-- For the Group 2, this is the bigest group in this clustering with 560 people. As the table show, their averagae tenure is 2 month, their average Order count is not even 2 orders.
+- For Group 2, this is the biggest group in this clustering, with 560 people. As the table shows, their average tenure is 2 months, and their average Order count is not even 2 orders.
 - It's also show that 65% of these order have coupons with it.
-  - These could be some new user that try using the company service (maybe because our coupons), need more investigate on these customers journey.
+  - These could be some new users who try using the company service (maybe because of our coupons), need more investigation on these customers' journey.
 
+## :checkered_flag: Results
+1. Tenure, Cashback, Distance, Complaint, and Day since last order are by far the most important things related to churn.
+2. Building an ML model that can predict churn users with a Balanced Accuracy of more than 92% on the test dataset.
+3. By clustering churn customers into 3 segments, we can find some deep information:
+   - Group 0: VIP customers who purchased many -> need some special retention.
+   - Group 1: Average customers who live far away from our storage, so that affects the user experience.
+   - Group 2: New users who usually purchased based on coupons, very easy to churn.
+  
+## 	:bell: Recommendation
+1. Run some special promotion campaigns to win back the churned users based on how they behaved when using the company's services.
+   - Run some personalized special offers for those VIP users.
+   - Find out what happens with those users live far away.
+   - Improve UX/UI for new users.
+2. Using this project ML model to predict churn users for future purposes, in order to make some retention promotions for easy-to-quit users.
+3. Next step: To gain more information, some things need to be done:
+   - Collect more information about the user's purchase behavior, demographics, and products.
+   - Analyze more about user experience 
 
