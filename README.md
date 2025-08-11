@@ -1,7 +1,7 @@
 # 📈 Ecommerce-Inactive-Customers-Analysis-&-Prediction-Python
 
 :warning: Customer churn leads to substantial profit loss in e-commerce businesses. 
-This project aims to identify churn drivers and predict the probability of churn using a full machine learning pipeline—data preprocessing, EDA, feature engineering, modeling, and evaluation using Python libraries such as Pandas, Scikit-learn, and Matplotlib. 
+This project aims to identify churn drivers and predict the probability of churn using a full machine learning pipeline using Python. 
 
 <img width="979" height="578" alt="image" src="https://github.com/user-attachments/assets/55b63286-37b0-4275-a35f-f51d88f451b1" />
 - Author: Huy Huynh
@@ -265,34 +265,34 @@ plt.show()
 **Tenure:**
 <img width="1001" height="604" alt="image" src="https://github.com/user-attachments/assets/a7434643-4c78-4a47-b13c-9b2e56afea92" />
 
-- For the Tenure: These users who use the app for 1 month or less have a churn rate of 53%, but the users that last more than 6 months have very little intention to quit, just less than 6%.
-  - So the recommendation is to make customes want to extend their time using company's services
+- For the Tenure: These users who use the app for 1 month or less have a churn rate of 53%, but the users who last more than 6 months have very little intention to quit, just less than 6%.
+  - So the recommendation is to make customers want to extend their time using the company's services
   
 **CashbackAmount:**
 <img width="1012" height="600" alt="image" src="https://github.com/user-attachments/assets/12b9f739-a3c5-48e0-8a7d-01b405dce9af" />
 
 - For the CashBack Amount: The churn rate of those who got the cashback >163$ is much lower than those who got less cashback
-  - But for more information, get features about discounts, gifts, vouchers to understand more about the trend
+  - But for more information, get features about discounts, gifts, and vouchers to understand more about the trend
   
 **WarehouseToHome:**
 <img width="998" height="591" alt="image" src="https://github.com/user-attachments/assets/35213a83-87eb-4f16-a02e-35ef059023b6" />
 
-- For the Warehouse to Home: The more distance from warehouse to customer home, the more likely they will leave.
-  - Investigate the delivery duration to understand the reason for that trend
+- For the Warehouse to Home: The farther the distance from warehouses to customers' homes, the more likely they will leave.
+  - Investigate the delivery duration to understand the reason for that trend, concentrate on those people who have a home more than 14km away in terms of distance.
   
 **DaySinceLastOrder:**
 <img width="1003" height="602" alt="image" src="https://github.com/user-attachments/assets/c03f1319-009b-4b9c-9504-a27fc0d1b66c" />
 
-- For DaysinceLastOrder: A lot of People who make orders in just less than 2 days churned, but those people who didn't make any purchase recently are still stick.
-  - Find out what is happening with the UX/UI, any malfunction or disturbance during purchase.
-  - For those people who did not quit but haven't bought any thing for several days -> perhaps run a special welcome campaign
+- For DaysinceLastOrder: A lot of People who make orders in just less than 2 days churned, but those people who didn't make any purchase recently are still stuck.
+  - Find out what is happening with the UX/UI, any malfunctions or disturbances during purchase.
+  - For those people who did not quit but haven't bought anything for several days -> perhaps run a special welcome campaign
     
 **Complain:**
 
 <img width="899" height="611" alt="image" src="https://github.com/user-attachments/assets/99803e73-7100-4445-a313-fdf8e1103e16" />
 
 - For Complain: People who complain tend to churn more
-  - Was the complaint dealt with correctly?
+  - Did the complaint dealt with correctly?
 
 **b. Categorical features:**
 - Plot the churn percentage for each category to see the trend:
@@ -300,8 +300,8 @@ plt.show()
 **PreferedLoginDevice:**
   <img width="888" height="566" alt="image" src="https://github.com/user-attachments/assets/32ba662f-be53-457c-9a7c-b862f647954d" />
 
-- Login Device: People using Computer tend to churn slightly higher than mobile user.
-  - Some bug on computer version of the app/web?
+- Login Device: People using computers tend to churn slightly higher than mobile users.
+  - Are there some bugs in the computer version of the app/web?
   - PC User interface might not be as good as on the phone?
 
 **PreferedPaymentMethod:**
@@ -309,28 +309,32 @@ plt.show()
 
 - Payment Method: the COD and E-Wallet payment mode churn percent was very high, above 23%
   - User who prefer COD might not fully trust the service -> Can change their behavior to prepayment by some voucher
-  - The E-Wallet user could purchase because of the coupons in e-wallet -> No coupons no purchase 
+  - The E-Wallet user could purchase because of the coupons in the e-wallet -> No coupons, no purchase 
   
 **Gender:**
 
 <img width="882" height="599" alt="image" src="https://github.com/user-attachments/assets/3d5e9ff1-7bbf-4c7e-84e4-f500d0a7fe6d" />
 
-- Gender: The Male churn just a littler bit higher than female,
-  - We should investigate whether they gay or not
+- Gender: The Male churn is just a little bit higher than female.
+  - We should investigate whether they are gay or not
 
 **PreferedOrderCat:** 
 
 <img width="924" height="599" alt="image" src="https://github.com/user-attachments/assets/d5539604-94b7-4873-9d6d-69694fc17685" />
 
-- Prefer order category: Those prefer mobile phone tend to churn more frequently,
-  - That's might due to it's is 1 time order only?
-
+- Prefer order category: Those who prefer purchasing mobile phones tend to churn more frequently, at about 27.5%. The Fashion customers' churn rate is kinda high too, about 15.5%
+  - Phone is a high-value product, so those customers are just one-time buyers. So we can give them some vouchers if they bring some of their relations to join the company's services.
+  - As for the Fashion category, learn more about the quality of the products. Many customers stop buying clothes from a shop because of its poor products.
+  
 **Marital Status:**
 
 <img width="864" height="595" alt="image" src="https://github.com/user-attachments/assets/bbaad357-ef12-4263-8e1f-d856cccb716b" />
 
-- Marital status: Single percent churn more than other peolple.
-  - Why our service doesn't attached those unmarried person?
+- Marital status: Single people have a churn percentage much higher than those with different marital statuses.
+  - Why doesn't our service attach those unmarried people?
+
+### 3. Building Machine Learning model to predict churn users.
+
 
 
 
