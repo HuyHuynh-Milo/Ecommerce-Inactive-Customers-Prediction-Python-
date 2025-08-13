@@ -199,7 +199,10 @@ unique value of MaritalStatus:
 
 ### 2. Exploratory Data Analysis
 
-<img width="579" height="497" alt="image" src="https://github.com/user-attachments/assets/de6e89d8-0d39-4309-b2d6-8eb0c1f85108" />
+***Churn Percentage:***
+
+<img width="608" height="490" alt="image" src="https://github.com/user-attachments/assets/e3e8bbc5-c6c6-4d4a-9847-467f213fdfe8" />
+
 
 
 ***Heatmap***
